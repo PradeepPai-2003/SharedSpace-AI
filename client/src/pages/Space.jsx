@@ -550,46 +550,49 @@ const Space = () => {
       {/* 2. CENTER PANEL: Messages Chat Area */}
       <div className="flex-grow flex flex-col min-w-0 h-full relative">
         {/* Space Header */}
-        <div className="h-16 border-b border-border-primary bg-background-secondary/20 flex items-center justify-between px-6 flex-shrink-0">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="h-14 md:h-16 border-b border-border-primary bg-background-secondary/20 flex items-center justify-between px-3 md:px-6 flex-shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={() => navigate('/dashboard')}
-              className="lg:hidden p-2 text-text-secondary hover:text-text-primary mr-1"
+              className="lg:hidden p-2 text-text-secondary hover:text-text-primary -ml-1 flex-shrink-0"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="min-w-0">
-              <h2 className="text-sm md:text-base font-bold text-text-primary truncate">{currentSpace.name}</h2>
-              <p className="text-[10px] md:text-xs text-text-secondary truncate mt-0.5">{currentSpace.description || 'No description provided.'}</p>
+              <h2 className="text-sm font-bold text-text-primary truncate max-w-[120px] sm:max-w-none">{currentSpace.name}</h2>
+              <p className="hidden sm:block text-[10px] text-text-secondary truncate mt-0.5">{currentSpace.description || 'No description provided.'}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             {isOwner && (
               <button
                 onClick={handleInviteClick}
-                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1 text-xs font-semibold transition-all active:scale-95 min-w-[36px] min-h-[36px] justify-center"
+                title="Invite Members"
               >
-                <UserPlus className="w-4 h-4 text-accent-primary" /> Invite
+                <UserPlus className="w-4 h-4 text-accent-primary" />
+                <span className="hidden sm:inline">Invite</span>
               </button>
             )}
 
             <button
               onClick={() => setMembersOpen(true)}
-              className="lg:hidden p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
+              className="lg:hidden p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1 text-xs font-semibold transition-all active:scale-95 min-w-[36px] min-h-[36px] justify-center"
               title="Active Members"
             >
-              <Users className="w-4 h-4 text-accent-ai" /> Members
+              <Users className="w-4 h-4 text-accent-ai" />
+              <span className="hidden sm:inline">Members</span>
             </button>
 
             {/* Three-dot Workspace Settings Menu */}
             <div className="relative">
               <button
                 onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-secondary hover:text-text-primary border border-border-primary rounded-xl flex items-center transition-all hover:scale-105 active:scale-95"
+                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-secondary hover:text-text-primary border border-border-primary rounded-xl flex items-center transition-all active:scale-95 min-w-[36px] min-h-[36px] justify-center"
                 title="Workspace Settings"
               >
-                <MoreVertical className="w-4.5 h-4.5" />
+                <MoreVertical className="w-4 h-4" />
               </button>
               
               {showSettingsMenu && (
@@ -653,7 +656,7 @@ const Space = () => {
             {/* Toggle right sidebar settings panel */}
             <button
               onClick={() => setRightPanelOpen(!rightPanelOpen)}
-              className="p-2 bg-background-elevated hover:bg-background-elevated/80 border border-border-primary rounded-xl text-text-secondary hover:text-text-primary transition-all"
+              className="p-2 bg-background-elevated hover:bg-background-elevated/80 border border-border-primary rounded-xl text-text-secondary hover:text-text-primary transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
             >
               {rightPanelOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
@@ -661,7 +664,7 @@ const Space = () => {
         </div>
 
         {/* Message Stream */}
-        <div className="flex-grow overflow-y-auto px-6 py-6 flex flex-col gap-4 scroll-gpu">
+        <div className="flex-grow overflow-y-auto px-3 md:px-6 py-3 md:py-6 flex flex-col gap-3 md:gap-4 scroll-gpu overscroll-contain">
           {messages.length === 0 ? (
             <div className="flex-grow flex flex-col items-center justify-center text-center gap-3">
               <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-primary flex items-center justify-center text-text-muted">
@@ -926,10 +929,10 @@ const Space = () => {
         </div>
 
         {/* Message Input Controls HUD */}
-        <div className="p-2.5 sm:p-4 bg-background-secondary/20 border-t border-border-primary flex-shrink-0 transition-all duration-300">
+        <div className="px-2 pt-1 pb-2 sm:px-4 sm:pt-2 sm:pb-3 bg-background-secondary/20 border-t border-border-primary flex-shrink-0 transition-all duration-300 safe-area-bottom">
           
           {/* Typing status bar */}
-          <div className="h-5 mb-1 text-[11px] text-text-secondary px-2">
+          <div className="h-4 mb-1 text-[10px] text-text-secondary px-1">
             {typingUsers.length > 0 && (
               <span className="italic animate-pulse">
                 {typingUsers.join(', ')} {typingUsers.length > 1 ? 'are' : 'is'} typing...
@@ -939,14 +942,14 @@ const Space = () => {
 
           {/* Reply Preview HUD */}
           {replyingTo && (
-            <div className="mb-3 mx-2 p-2.5 rounded-xl bg-background-elevated border border-border-primary flex items-center justify-between animate-fade-in relative z-10">
+            <div className="mb-2 p-2 rounded-xl bg-background-elevated border border-border-primary flex items-center justify-between animate-fade-in relative z-10">
               <div className="flex items-center gap-2 min-w-0">
-                <CornerUpLeft className="w-4 h-4 text-accent-primary flex-shrink-0" />
+                <CornerUpLeft className="w-3.5 h-3.5 text-accent-primary flex-shrink-0" />
                 <div className="text-xs min-w-0">
-                  <span className="font-bold text-text-primary block">
+                  <span className="font-bold text-text-primary block text-[11px]">
                     Replying to @{replyingTo.sender?.username || 'User'}
                   </span>
-                  <span className="text-text-secondary truncate block max-w-[200px] sm:max-w-md">
+                  <span className="text-text-secondary truncate block max-w-[160px] sm:max-w-md text-[10px]">
                     {replyingTo.content}
                   </span>
                 </div>
@@ -961,7 +964,7 @@ const Space = () => {
             </div>
           )}
 
-          <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 items-center">
+          <form onSubmit={handleSendMessage} className="flex gap-1.5 sm:gap-2.5 items-end">
             
             {/* Attachment inputs */}
             <input
@@ -976,10 +979,10 @@ const Space = () => {
               type="button"
               disabled={uploading}
               onClick={() => fileInputRef.current.click()}
-              className="flex-shrink-0 w-11 h-11 flex items-center justify-center bg-background-elevated hover:bg-background-elevated/80 disabled:opacity-50 text-text-secondary hover:text-text-primary rounded-xl border border-border-primary transition-all active:scale-95"
+              className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-background-elevated hover:bg-background-elevated/80 disabled:opacity-50 text-text-secondary hover:text-text-primary rounded-xl border border-border-primary transition-all active:scale-95 mb-0.5"
               title="Attach File"
             >
-              <Paperclip className="w-5 h-5" />
+              <Paperclip className="w-4 h-4" />
             </button>
 
             {/* Input Bar */}
@@ -990,10 +993,10 @@ const Space = () => {
                 value={messageText}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={uploading ? 'Uploading media attachment...' : 'Type message here... Use @AI to mention Gemini.'}
+                placeholder={uploading ? 'Uploading...' : 'Message... (@AI for Gemini)'}
                 disabled={uploading}
                 rows={1}
-                className="w-full bg-background-primary border border-border-primary rounded-xl pl-4 pr-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary resize-none overflow-y-auto max-h-32 min-h-[44px] sm:min-h-[46px] leading-relaxed"
+                className="w-full bg-background-primary border border-border-primary rounded-xl pl-3 pr-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary resize-none overflow-y-hidden max-h-28 min-h-[40px] leading-relaxed"
               />
             </div>
 
@@ -1001,7 +1004,7 @@ const Space = () => {
             <button
               type="submit"
               disabled={uploading || !messageText.trim()}
-              className={`flex-shrink-0 w-11 h-11 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center text-white border-none cursor-pointer ${
+              className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center text-white border-none cursor-pointer mb-0.5 ${
                 messageText.includes('@AI')
                   ? 'bg-accent-ai hover:bg-accent-ai/90 shadow-accent-ai/20'
                   : 'bg-accent-primary hover:bg-accent-primary/90 shadow-accent-primary/20'
@@ -1009,9 +1012,9 @@ const Space = () => {
               title={messageText.includes('@AI') ? 'Send to AI' : 'Send Message'}
             >
               {messageText.includes('@AI') ? (
-                <Sparkles className="w-5 h-5 animate-pulse text-white" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse text-white" />
               ) : (
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
               )}
             </button>
           </form>
@@ -1670,14 +1673,8 @@ const Space = () => {
           animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
         }
         @media (max-width: 1279px) {
           .slide-in-right {
@@ -1685,12 +1682,13 @@ const Space = () => {
           }
         }
         @keyframes slideInRight {
-          from {
-            transform: translateX(100%);
-          }
-          to {
-            transform: translateX(0);
-          }
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+        /* Hide scrollbars on mobile for chat area */
+        @media (max-width: 768px) {
+          .scroll-gpu::-webkit-scrollbar { display: none; }
+          .scroll-gpu { -ms-overflow-style: none; scrollbar-width: none; }
         }
       `}</style>
     </div>
