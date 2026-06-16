@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// Get API URL from env variables
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Resolve the API base URL, always ensuring it ends with /api.
+// This makes the app resilient to VITE_API_URL being set with or without the /api suffix.
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+export const API_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
