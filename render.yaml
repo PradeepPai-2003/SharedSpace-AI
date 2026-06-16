@@ -1,0 +1,28 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: sharedspace-ai-backend
+    env: node
+    plan: starter
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false # Must be provided in Render dashboard
+      - key: JWT_SECRET
+        sync: false # Must be provided in Render dashboard
+      - key: CLIENT_URL
+        sync: false # Must be provided in Render dashboard (Vercel URL)
+      - key: GEMINI_API_KEY
+        sync: false # Must be provided in Render dashboard
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false # Must be provided in Render dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false # Must be provided in Render dashboard
+      - key: CLOUDINARY_API_SECRET
+        sync: false # Must be provided in Render dashboard

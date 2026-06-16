@@ -1,0 +1,21 @@
+# Dependency directories
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dev-dist/
+dist-ssr/
+*.local
+
+# Environment variables
+.env
+**/.env
+.env.production
+.env.development
+.env.local
+
+# IDE/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

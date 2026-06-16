@@ -1,0 +1,191 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --color-background-primary: var(--background-primary);
+  --color-background-secondary: var(--background-secondary);
+  --color-background-elevated: var(--background-elevated);
+  
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-ai: var(--accent-ai);
+  
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  
+  --color-border-primary: var(--border-primary);
+  --color-danger: var(--danger);
+
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-ping-slow: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+:root {
+  /* Default: Dark Theme */
+  --background-primary: #0B1020;
+  --background-secondary: #16213E; /* Surface */
+  --background-elevated: #1F305E; /* Elevated / active surface */
+  
+  --accent-primary: #6366F1;
+  --accent-ai: #14B8A6;
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #94A3B8;
+  --text-muted: #475569;
+  
+  --border-primary: #2A3B5C;
+  --danger: #EF4444;
+
+  --scrollbar-thumb: rgba(148, 163, 184, 0.3);
+  --scrollbar-thumb-hover: rgba(148, 163, 184, 0.6);
+}
+
+.light {
+  /* Light Theme */
+  --background-primary: #F8FAFC;
+  --background-secondary: #FFFFFF; /* Surface */
+  --background-elevated: #E2E8F0; /* Elevated / active surface */
+  
+  --accent-primary: #6366F1;
+  --accent-ai: #14B8A6;
+  
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  
+  --border-primary: #E2E8F0;
+  --danger: #EF4444;
+
+  --scrollbar-thumb: rgba(71, 85, 105, 0.25);
+  --scrollbar-thumb-hover: rgba(71, 85, 105, 0.55);
+}
+
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+
+@layer base {
+  body {
+    @apply bg-background-primary text-text-primary antialiased;
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+/* GPU accelerated scrolling class */
+.scroll-gpu {
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* AI assistant breathing glow animation - GPU Optimized */
+@keyframes ai-breathing {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+.animate-ai-glow {
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.4), 0 0 35px rgba(20, 184, 166, 0.2);
+  animation: ai-breathing 3s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* AI assistant float animation */
+@keyframes ai-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-ai-float {
+  animation: ai-float 4s ease-in-out infinite;
+}
+
+/* Keyframes for glowing effects - GPU Optimized */
+@keyframes orb-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.95;
+  }
+}
+
+.animate-orb {
+  box-shadow: 0 0 30px rgba(20, 184, 166, 0.5), 0 0 60px rgba(20, 184, 166, 0.25);
+  animation: orb-pulse 4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Skeleton animation */
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--background-secondary) 25%, var(--background-elevated) 37%, var(--background-secondary) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.4s ease infinite;
+}
