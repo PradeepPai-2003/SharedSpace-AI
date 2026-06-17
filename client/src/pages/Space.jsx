@@ -31,277 +31,6 @@ const TypingDots = () => {
   );
 };
 
-const MessageItem = React.memo(({
-  msg,
-  user,
-  currentSpace,
-  canDeleteAny,
-  isPinned,
-  isMe,
-  isAI,
-  isSys,
-  canDelete,
-  handleBubbleClick,
-  setReplyingTo,
-  setDeleteConfirmMsg,
-  togglePinMessage,
-  unpinMessageInSpace,
-  pinMessageInSpace,
-  handleReplyWithAI,
-  handleReactionClick,
-  setActiveMediaViewer,
-  mediaList
-}) => {
-  if (isSys) {
-    return (
-      <div className="text-center py-2">
-        <span className="text-[10px] font-medium text-text-muted bg-background-secondary px-3 py-1 rounded-full border border-border-primary/50">
-          {msg.content}
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={`flex gap-3 max-w-[80%] group ${isMe ? 'self-end flex-row-reverse' : 'self-start'}`}
-    >
-      {/* AI Bot Avatar next to the bubble */}
-      {isAI && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-ai/10 border border-accent-ai/30 flex items-center justify-center overflow-hidden self-end mb-1">
-          {msg.sender?.avatar ? (
-            <img src={msg.sender.avatar} alt="AI Avatar" className="w-full h-full object-cover" />
-          ) : (
-            <Bot className="w-4 h-4 text-accent-ai" />
-          )}
-        </div>
-      )}
-
-      <div className={`flex flex-col focus:outline-none ${isMe ? 'items-end' : 'items-start'}`} tabIndex={0}>
-        {/* Sender Metadata (Name + Time) */}
-        <div className="flex items-center gap-2 mb-1.5">
-          {!isMe && (
-            <span className="text-[11px] font-bold text-text-primary flex items-center gap-1">
-              {isAI ? (
-                <span className="px-1.5 py-0.5 bg-accent-ai/20 border border-accent-ai/30 text-accent-ai rounded-md text-[9px] font-bold flex items-center gap-0.5">
-                  AI
-                </span>
-              ) : null}
-              {msg.sender?.displayName || msg.sender?.username || 'User'}
-            </span>
-          )}
-          <span className="text-[9px] text-text-muted">
-            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          {isPinned && (
-            <Pin className="w-3 h-3 text-accent-primary flex-shrink-0 rotate-45" title="Pinned Message" />
-          )}
-          {msg.pinnedByUsers?.includes(user._id) && (
-            <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" title="Starred Message" />
-          )}
-        </div>
-
-        {/* Bubble body */}
-        <div
-          onClick={() => handleBubbleClick(msg)}
-          className={`p-3.5 rounded-2xl shadow-md relative group/bubble cursor-pointer lg:cursor-default ${
-            isMe
-              ? 'bg-accent-primary text-white rounded-tr-none'
-              : isAI
-              ? 'bg-gradient-to-tr from-accent-ai/10 to-teal-400/10 border-2 border-accent-ai/50 shadow-[0_0_15px_rgba(45,212,191,0.15)] text-text-primary rounded-tl-none'
-              : 'bg-background-secondary border border-border-primary text-text-primary rounded-tl-none'
-          }`}
-        >
-          {/* Soft-deleted message check */}
-          {msg.isDeleted ? (
-            <p className="text-xs italic text-text-muted">This message was deleted.</p>
-          ) : (
-            <>
-              {msg.replyTo && (
-                <div className="mb-2 p-2 rounded bg-background-primary/40 border-l-2 border-accent-primary text-[11px] text-text-secondary leading-relaxed">
-                  <span className="font-bold text-text-primary block text-[10px]">
-                    @{msg.replyTo.sender?.username || 'User'}
-                  </span>
-                  <span className="truncate block max-w-xs">
-                    {msg.replyTo.isDeleted ? 'This message was deleted.' : msg.replyTo.content}
-                  </span>
-                </div>
-              )}
-              {/* Text Content */}
-              {(!msg.content || msg.content.trim() === '') && msg.isStreaming ? (
-                <TypingDots />
-              ) : (
-                <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
-                  {msg.content}
-                  {msg.isStreaming && (
-                    <span className="inline-block w-1.5 h-3.5 ml-1 bg-accent-ai animate-pulse rounded-sm align-middle" />
-                  )}
-                </p>
-              )}
-
-              {/* Image Attachment Rendering */}
-              {msg.type === 'image' && msg.fileUrl && (
-                <div className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm cursor-zoom-in">
-                  <img
-                    src={msg.fileUrl}
-                    alt={msg.fileName || 'shared asset'}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
-                      setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
-                    }}
-                    className="max-h-60 w-full object-cover hover:opacity-95 transition-opacity"
-                  />
-                </div>
-              )}
-
-              {/* Video Attachment Rendering */}
-              {msg.type === 'video' && msg.fileUrl && (
-                <div 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
-                    setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
-                  }}
-                  className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm bg-black relative cursor-pointer group/video"
-                >
-                  <video src={msg.fileUrl} className="max-h-60 w-full object-contain pointer-events-none" />
-                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover/video:bg-black/45 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white scale-100 group-hover/video:scale-110 transition-transform shadow-lg">
-                      <Play className="w-5 h-5 translate-x-0.5 fill-white text-white" />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Controls row (Reply + Trash + Pin + Reply with AI) on hover */}
-          {!msg.isDeleted ? (
-            <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
-              isMe ? 'right-full mr-3' : 'left-full ml-3'
-            } ${isMe ? '' : 'flex-row-reverse'}`}>
-              <button
-                onClick={() => setReplyingTo(msg)}
-                className="p-1.5 text-text-muted hover:text-accent-primary rounded-lg hover:bg-background-elevated transition-all"
-                title="Reply to Message"
-              >
-                <CornerUpLeft className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setDeleteConfirmMsg(msg)}
-                className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
-                title="Delete Message"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => togglePinMessage(msg._id)}
-                className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
-                  msg.pinnedByUsers?.includes(user._id) ? 'text-amber-500 fill-amber-500' : 'text-text-muted hover:text-amber-500'
-                }`}
-                title={msg.pinnedByUsers?.includes(user._id) ? "Unstar Message" : "Pin Message"}
-              >
-                <Star className="w-3.5 h-3.5" />
-              </button>
-              {canDeleteAny && (
-                <button
-                  onClick={() => {
-                    console.log(`[DEBUG] Workspace Pin/Unpin button clicked. Message ID: ${msg._id}, isPinned: ${isPinned}`);
-                    if (isPinned) {
-                      unpinMessageInSpace(msg._id);
-                    } else {
-                      pinMessageInSpace(msg._id);
-                    }
-                  }}
-                  className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
-                    isPinned ? 'text-accent-primary' : 'text-text-muted hover:text-accent-primary'
-                  }`}
-                  title={isPinned ? "Unpin Message" : "Pin Message"}
-                >
-                  <Pin className="w-3.5 h-3.5" />
-                </button>
-              )}
-              {currentSpace?.hasAI && (
-                <button
-                  onClick={() => handleReplyWithAI(msg._id)}
-                  className="p-1.5 text-text-muted hover:text-accent-ai rounded-lg hover:bg-background-elevated transition-all"
-                  title="Reply with AI"
-                >
-                  <Bot className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
-              isMe ? 'right-full mr-3' : 'left-full ml-3'
-            } ${isMe ? '' : 'flex-row-reverse'}`}>
-              <button
-                onClick={() => setDeleteConfirmMsg(msg)}
-                className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
-                title="Delete Message"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Reaction Badges row */}
-        {msg.reactions && msg.reactions.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-1.5">
-            {msg.reactions.map((react) => {
-              const hasReacted = react.users.includes(user._id);
-              return (
-                <button
-                  key={react.emoji}
-                  onClick={() => handleReactionClick(msg._id, react.emoji, hasReacted)}
-                  className={`px-2 py-0.5 rounded-full text-[10px] border flex items-center gap-1 font-medium transition-all ${
-                    hasReacted
-                      ? 'bg-accent-primary/20 border-accent-primary text-text-primary'
-                      : 'bg-background-secondary border-border-primary hover:border-text-secondary text-text-secondary'
-                  }`}
-                >
-                  <span>{react.emoji}</span>
-                  <span>{react.users.length}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Quick reactions picker panel (hover/focus-triggered) */}
-        {!msg.isDeleted && (
-          <div className="hidden lg:flex gap-1 mt-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-            {['👍', '❤️', '🔥', '😂', '😮', '🙏'].map((emoji) => {
-              const reacted = msg.reactions?.some((r) => r.emoji === emoji && r.users.includes(user._id));
-              return (
-                <button
-                  key={emoji}
-                  onClick={() => handleReactionClick(msg._id, emoji, reacted)}
-                  className="text-xs p-1 hover:bg-background-elevated rounded-md hover:scale-110 active:scale-95 transition-transform"
-                >
-                  {emoji}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}, (prevProps, nextProps) => {
-  return (
-    prevProps.msg._id === nextProps.msg._id &&
-    prevProps.msg.content === nextProps.msg.content &&
-    prevProps.msg.isStreaming === nextProps.msg.isStreaming &&
-    prevProps.msg.isDeleted === nextProps.msg.isDeleted &&
-    prevProps.isPinned === nextProps.isPinned &&
-    JSON.stringify(prevProps.msg.reactions) === JSON.stringify(nextProps.msg.reactions) &&
-    JSON.stringify(prevProps.msg.pinnedByUsers) === JSON.stringify(nextProps.msg.pinnedByUsers)
-  );
-});
-
 const Space = () => {
   const { spaceId } = useParams();
   const navigate = useNavigate();
@@ -386,8 +115,6 @@ const Space = () => {
   const messageEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const isTypingRef = useRef(false);
-  const typingTimeoutRef = useRef(null);
 
   // Fetch space details and message history on load/params-change
   useEffect(() => {
@@ -414,10 +141,6 @@ const Space = () => {
         socket.emit('leave_space', { spaceId });
       }
       clearCurrentSpace();
-
-      // Clear typing timeouts
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      isTypingRef.current = false;
     };
   }, [spaceId, fetchSpaceDetails, fetchMessages, clearCurrentSpace]);
 
@@ -480,10 +203,9 @@ const Space = () => {
     );
   }
 
-  // Handle typing emitters (throttled to avoid network/DB congestion)
+  // Handle typing emitters
   const handleInputChange = (e) => {
-    const val = e.target.value;
-    setMessageText(val);
+    setMessageText(e.target.value);
     
     // Auto-grow height for textarea
     if (inputRef.current) {
@@ -494,23 +216,10 @@ const Space = () => {
     const socket = getSocket();
     if (!socket) return;
 
-    if (val.trim().length > 0) {
-      if (!isTypingRef.current) {
-        isTypingRef.current = true;
-        socket.emit('typing_start', { spaceId });
-      }
-
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = setTimeout(() => {
-        isTypingRef.current = false;
-        socket.emit('typing_stop', { spaceId });
-      }, 3000);
+    if (e.target.value.trim().length > 0) {
+      socket.emit('typing_start', { spaceId });
     } else {
-      if (isTypingRef.current) {
-        isTypingRef.current = false;
-        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-        socket.emit('typing_stop', { spaceId });
-      }
+      socket.emit('typing_stop', { spaceId });
     }
   };
 
@@ -536,10 +245,6 @@ const Space = () => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
     }
-
-    // Reset typing status on send
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    isTypingRef.current = false;
 
     // Emit typing stop
     const socket = getSocket();
@@ -845,49 +550,46 @@ const Space = () => {
       {/* 2. CENTER PANEL: Messages Chat Area */}
       <div className="flex-grow flex flex-col min-w-0 h-full relative">
         {/* Space Header */}
-        <div className="h-14 md:h-16 border-b border-border-primary bg-background-secondary/20 flex items-center justify-between px-3 md:px-6 flex-shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="h-16 border-b border-border-primary bg-background-secondary/20 flex items-center justify-between px-6 flex-shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               onClick={() => navigate('/dashboard')}
-              className="lg:hidden p-2 text-text-secondary hover:text-text-primary -ml-1 flex-shrink-0"
+              className="lg:hidden p-2 text-text-secondary hover:text-text-primary mr-1"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="min-w-0">
-              <h2 className="text-sm font-bold text-text-primary truncate max-w-[120px] sm:max-w-none">{currentSpace.name}</h2>
-              <p className="hidden sm:block text-[10px] text-text-secondary truncate mt-0.5">{currentSpace.description || 'No description provided.'}</p>
+              <h2 className="text-sm md:text-base font-bold text-text-primary truncate">{currentSpace.name}</h2>
+              <p className="text-[10px] md:text-xs text-text-secondary truncate mt-0.5">{currentSpace.description || 'No description provided.'}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {isOwner && (
               <button
                 onClick={handleInviteClick}
-                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1 text-xs font-semibold transition-all active:scale-95 min-w-[36px] min-h-[36px] justify-center"
-                title="Invite Members"
+                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
               >
-                <UserPlus className="w-4 h-4 text-accent-primary" />
-                <span className="hidden sm:inline">Invite</span>
+                <UserPlus className="w-4 h-4 text-accent-primary" /> Invite
               </button>
             )}
 
             <button
               onClick={() => setMembersOpen(true)}
-              className="lg:hidden p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1 text-xs font-semibold transition-all active:scale-95 min-w-[36px] min-h-[36px] justify-center"
+              className="lg:hidden p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-primary border border-border-primary rounded-xl flex items-center gap-1.5 text-xs font-semibold transition-all hover:scale-105 active:scale-95"
               title="Active Members"
             >
-              <Users className="w-4 h-4 text-accent-ai" />
-              <span className="hidden sm:inline">Members</span>
+              <Users className="w-4 h-4 text-accent-ai" /> Members
             </button>
 
             {/* Three-dot Workspace Settings Menu */}
             <div className="relative">
               <button
                 onClick={() => setShowSettingsMenu(!showSettingsMenu)}
-                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-secondary hover:text-text-primary border border-border-primary rounded-xl flex items-center transition-all active:scale-95 min-w-[36px] min-h-[36px] justify-center"
+                className="p-2 bg-background-elevated hover:bg-background-elevated/80 text-text-secondary hover:text-text-primary border border-border-primary rounded-xl flex items-center transition-all hover:scale-105 active:scale-95"
                 title="Workspace Settings"
               >
-                <MoreVertical className="w-4 h-4" />
+                <MoreVertical className="w-4.5 h-4.5" />
               </button>
               
               {showSettingsMenu && (
@@ -951,7 +653,7 @@ const Space = () => {
             {/* Toggle right sidebar settings panel */}
             <button
               onClick={() => setRightPanelOpen(!rightPanelOpen)}
-              className="p-2 bg-background-elevated hover:bg-background-elevated/80 border border-border-primary rounded-xl text-text-secondary hover:text-text-primary transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
+              className="p-2 bg-background-elevated hover:bg-background-elevated/80 border border-border-primary rounded-xl text-text-secondary hover:text-text-primary transition-all"
             >
               {rightPanelOpen ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
@@ -959,7 +661,7 @@ const Space = () => {
         </div>
 
         {/* Message Stream */}
-        <div className="flex-grow overflow-y-auto px-3 md:px-6 py-3 md:py-6 flex flex-col gap-3 md:gap-4 scroll-gpu overscroll-contain">
+        <div className="flex-grow overflow-y-auto px-6 py-6 flex flex-col gap-4 scroll-gpu">
           {messages.length === 0 ? (
             <div className="flex-grow flex flex-col items-center justify-center text-center gap-3">
               <div className="w-16 h-16 rounded-full bg-background-secondary border border-border-primary flex items-center justify-center text-text-muted">
@@ -979,29 +681,244 @@ const Space = () => {
               });
               const canDelete = isMe || canDeleteAny;
 
+              if (isSys) {
+                return (
+                  <div key={msg._id} className="text-center py-2">
+                    <span className="text-[10px] font-medium text-text-muted bg-background-secondary px-3 py-1 rounded-full border border-border-primary/50">
+                      {msg.content}
+                    </span>
+                  </div>
+                );
+              }
+
               return (
-                <MessageItem
+                <div
                   key={msg._id}
-                  msg={msg}
-                  user={user}
-                  currentSpace={currentSpace}
-                  canDeleteAny={canDeleteAny}
-                  isPinned={isPinned}
-                  isMe={isMe}
-                  isAI={isAI}
-                  isSys={isSys}
-                  canDelete={canDelete}
-                  handleBubbleClick={handleBubbleClick}
-                  setReplyingTo={setReplyingTo}
-                  setDeleteConfirmMsg={setDeleteConfirmMsg}
-                  togglePinMessage={togglePinMessage}
-                  unpinMessageInSpace={unpinMessageInSpace}
-                  pinMessageInSpace={pinMessageInSpace}
-                  handleReplyWithAI={handleReplyWithAI}
-                  handleReactionClick={handleReactionClick}
-                  setActiveMediaViewer={setActiveMediaViewer}
-                  mediaList={mediaList}
-                />
+                  className={`flex gap-3 max-w-[80%] group ${isMe ? 'self-end flex-row-reverse' : 'self-start'}`}
+                >
+                  {/* AI Bot Avatar next to the bubble */}
+                  {isAI && (
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-ai/10 border border-accent-ai/30 flex items-center justify-center overflow-hidden self-end mb-1">
+                      {msg.sender?.avatar ? (
+                        <img src={msg.sender.avatar} alt="AI Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <Bot className="w-4 h-4 text-accent-ai" />
+                      )}
+                    </div>
+                  )}
+
+                  <div className={`flex flex-col focus:outline-none ${isMe ? 'items-end' : 'items-start'}`} tabIndex={0}>
+                    {/* Sender Metadata (Name + Time) */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {!isMe && (
+                        <span className="text-[11px] font-bold text-text-primary flex items-center gap-1">
+                          {isAI ? (
+                            <span className="px-1.5 py-0.5 bg-accent-ai/20 border border-accent-ai/30 text-accent-ai rounded-md text-[9px] font-bold flex items-center gap-0.5">
+                              AI
+                            </span>
+                          ) : null}
+                          {msg.sender.displayName || msg.sender.username}
+                        </span>
+                      )}
+                      <span className="text-[9px] text-text-muted">
+                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {isPinned && (
+                        <Pin className="w-3 h-3 text-accent-primary flex-shrink-0 rotate-45" title="Pinned Message" />
+                      )}
+                      {msg.pinnedByUsers?.includes(user._id) && (
+                        <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" title="Starred Message" />
+                      )}
+                    </div>
+
+                    {/* Bubble body */}
+                    <div
+                      onClick={() => handleBubbleClick(msg)}
+                      className={`p-3.5 rounded-2xl shadow-md relative group/bubble cursor-pointer lg:cursor-default ${
+                        isMe
+                          ? 'bg-accent-primary text-white rounded-tr-none'
+                          : isAI
+                          ? 'bg-gradient-to-tr from-accent-ai/10 to-teal-400/10 border-2 border-accent-ai/50 shadow-[0_0_15px_rgba(45,212,191,0.15)] text-text-primary rounded-tl-none'
+                          : 'bg-background-secondary border border-border-primary text-text-primary rounded-tl-none'
+                      }`}
+                    >
+                      {/* Soft-deleted message check */}
+                      {msg.isDeleted ? (
+                        <p className="text-xs italic text-text-muted">This message was deleted.</p>
+                      ) : (
+                        <>
+                          {msg.replyTo && (
+                            <div className="mb-2 p-2 rounded bg-background-primary/40 border-l-2 border-accent-primary text-[11px] text-text-secondary leading-relaxed">
+                              <span className="font-bold text-text-primary block text-[10px]">
+                                @{msg.replyTo.sender?.username || 'User'}
+                              </span>
+                              <span className="truncate block max-w-xs">
+                                {msg.replyTo.isDeleted ? 'This message was deleted.' : msg.replyTo.content}
+                              </span>
+                            </div>
+                          )}
+                          {/* Text Content */}
+                          {(!msg.content || msg.content.trim() === '') && msg.isStreaming ? (
+                            <TypingDots />
+                          ) : (
+                            <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
+                              {msg.content}
+                              {msg.isStreaming && (
+                                <span className="inline-block w-1.5 h-3.5 ml-1 bg-accent-ai animate-pulse rounded-sm align-middle" />
+                              )}
+                            </p>
+                          )}
+
+                          {/* Image Attachment Rendering */}
+                          {msg.type === 'image' && msg.fileUrl && (
+                            <div className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm cursor-zoom-in">
+                              <img
+                                src={msg.fileUrl}
+                                alt={msg.fileName || 'shared asset'}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
+                                  setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
+                                }}
+                                className="max-h-60 w-full object-cover hover:opacity-95 transition-opacity"
+                              />
+                            </div>
+                          )}
+
+                          {/* Video Attachment Rendering */}
+                          {msg.type === 'video' && msg.fileUrl && (
+                            <div 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
+                                setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
+                              }}
+                              className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm bg-black relative cursor-pointer group/video"
+                            >
+                              <video src={msg.fileUrl} className="max-h-60 w-full object-contain pointer-events-none" />
+                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover/video:bg-black/45 transition-colors">
+                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white scale-100 group-hover/video:scale-110 transition-transform shadow-lg">
+                                  <Play className="w-5 h-5 translate-x-0.5 fill-white text-white" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Controls row (Reply + Trash + Pin + Reply with AI) on hover */}
+                      {!msg.isDeleted ? (
+                        <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
+                          isMe ? 'right-full mr-3' : 'left-full ml-3'
+                        } ${isMe ? '' : 'flex-row-reverse'}`}>
+                          <button
+                            onClick={() => setReplyingTo(msg)}
+                            className="p-1.5 text-text-muted hover:text-accent-primary rounded-lg hover:bg-background-elevated transition-all"
+                            title="Reply to Message"
+                          >
+                            <CornerUpLeft className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmMsg(msg)}
+                            className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
+                            title="Delete Message"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => togglePinMessage(msg._id)}
+                            className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
+                              msg.pinnedByUsers?.includes(user._id) ? 'text-amber-500 fill-amber-500' : 'text-text-muted hover:text-amber-500'
+                            }`}
+                            title={msg.pinnedByUsers?.includes(user._id) ? "Unstar Message" : "Pin Message"}
+                          >
+                            <Star className="w-3.5 h-3.5" />
+                          </button>
+                          {canDeleteAny && (
+                            <button
+                              onClick={() => {
+                                console.log(`[DEBUG] Workspace Pin/Unpin button clicked. Message ID: ${msg._id}, isPinned: ${isPinned}`);
+                                if (isPinned) {
+                                  unpinMessageInSpace(msg._id);
+                                } else {
+                                  pinMessageInSpace(msg._id);
+                                }
+                              }}
+                              className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
+                                isPinned ? 'text-accent-primary' : 'text-text-muted hover:text-accent-primary'
+                              }`}
+                              title={isPinned ? "Unpin Message" : "Pin Message"}
+                            >
+                              <Pin className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {currentSpace?.hasAI && (
+                            <button
+                              onClick={() => handleReplyWithAI(msg._id)}
+                              className="p-1.5 text-text-muted hover:text-accent-ai rounded-lg hover:bg-background-elevated transition-all"
+                              title="Reply with AI"
+                            >
+                              <Bot className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
+                          isMe ? 'right-full mr-3' : 'left-full ml-3'
+                        } ${isMe ? '' : 'flex-row-reverse'}`}>
+                          <button
+                            onClick={() => setDeleteConfirmMsg(msg)}
+                            className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
+                            title="Delete Message"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                  {/* Reaction Badges row */}
+                  {msg.reactions && msg.reactions.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {msg.reactions.map((react) => {
+                        const hasReacted = react.users.includes(user._id);
+                        return (
+                          <button
+                            key={react.emoji}
+                            onClick={() => handleReactionClick(msg._id, react.emoji, hasReacted)}
+                            className={`px-2 py-0.5 rounded-full text-[10px] border flex items-center gap-1 font-medium transition-all ${
+                              hasReacted
+                                ? 'bg-accent-primary/20 border-accent-primary text-text-primary'
+                                : 'bg-background-secondary border-border-primary hover:border-text-secondary text-text-secondary'
+                            }`}
+                          >
+                            <span>{react.emoji}</span>
+                            <span>{react.users.length}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Quick reactions picker panel (hover/focus-triggered) */}
+                  {!msg.isDeleted && (
+                    <div className="hidden lg:flex gap-1 mt-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                      {['👍', '❤️', '🔥', '😂', '😮', '🙏'].map((emoji) => {
+                        const reacted = msg.reactions?.some((r) => r.emoji === emoji && r.users.includes(user._id));
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => handleReactionClick(msg._id, emoji, reacted)}
+                            className="text-xs p-1 hover:bg-background-elevated rounded-md hover:scale-110 active:scale-95 transition-transform"
+                          >
+                            {emoji}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  </div>
+                </div>
               );
             })
           )}
@@ -1009,10 +926,10 @@ const Space = () => {
         </div>
 
         {/* Message Input Controls HUD */}
-        <div className="px-2 pt-1 pb-2 sm:px-4 sm:pt-2 sm:pb-3 bg-background-secondary/20 border-t border-border-primary flex-shrink-0 transition-all duration-300 safe-area-bottom">
+        <div className="p-2.5 sm:p-4 bg-background-secondary/20 border-t border-border-primary flex-shrink-0 transition-all duration-300">
           
           {/* Typing status bar */}
-          <div className="h-4 mb-1 text-[10px] text-text-secondary px-1">
+          <div className="h-5 mb-1 text-[11px] text-text-secondary px-2">
             {typingUsers.length > 0 && (
               <span className="italic animate-pulse">
                 {typingUsers.join(', ')} {typingUsers.length > 1 ? 'are' : 'is'} typing...
@@ -1022,14 +939,14 @@ const Space = () => {
 
           {/* Reply Preview HUD */}
           {replyingTo && (
-            <div className="mb-2 p-2 rounded-xl bg-background-elevated border border-border-primary flex items-center justify-between animate-fade-in relative z-10">
+            <div className="mb-3 mx-2 p-2.5 rounded-xl bg-background-elevated border border-border-primary flex items-center justify-between animate-fade-in relative z-10">
               <div className="flex items-center gap-2 min-w-0">
-                <CornerUpLeft className="w-3.5 h-3.5 text-accent-primary flex-shrink-0" />
+                <CornerUpLeft className="w-4 h-4 text-accent-primary flex-shrink-0" />
                 <div className="text-xs min-w-0">
-                  <span className="font-bold text-text-primary block text-[11px]">
+                  <span className="font-bold text-text-primary block">
                     Replying to @{replyingTo.sender?.username || 'User'}
                   </span>
-                  <span className="text-text-secondary truncate block max-w-[160px] sm:max-w-md text-[10px]">
+                  <span className="text-text-secondary truncate block max-w-[200px] sm:max-w-md">
                     {replyingTo.content}
                   </span>
                 </div>
@@ -1044,7 +961,7 @@ const Space = () => {
             </div>
           )}
 
-          <form onSubmit={handleSendMessage} className="flex gap-1.5 sm:gap-2.5 items-end">
+          <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 items-center">
             
             {/* Attachment inputs */}
             <input
@@ -1059,10 +976,10 @@ const Space = () => {
               type="button"
               disabled={uploading}
               onClick={() => fileInputRef.current.click()}
-              className="flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-background-elevated hover:bg-background-elevated/80 disabled:opacity-50 text-text-secondary hover:text-text-primary rounded-xl border border-border-primary transition-all active:scale-95 mb-0.5"
+              className="flex-shrink-0 w-11 h-11 flex items-center justify-center bg-background-elevated hover:bg-background-elevated/80 disabled:opacity-50 text-text-secondary hover:text-text-primary rounded-xl border border-border-primary transition-all active:scale-95"
               title="Attach File"
             >
-              <Paperclip className="w-4 h-4" />
+              <Paperclip className="w-5 h-5" />
             </button>
 
             {/* Input Bar */}
@@ -1073,10 +990,10 @@ const Space = () => {
                 value={messageText}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
-                placeholder={uploading ? 'Uploading...' : 'Message... (@AI for Gemini)'}
+                placeholder={uploading ? 'Uploading media attachment...' : 'Type message here... Use @AI to mention Gemini.'}
                 disabled={uploading}
                 rows={1}
-                className="w-full bg-background-primary border border-border-primary rounded-xl pl-3 pr-3 py-2.5 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary resize-none overflow-y-hidden max-h-28 min-h-[40px] leading-relaxed"
+                className="w-full bg-background-primary border border-border-primary rounded-xl pl-4 pr-4 py-3 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary resize-none overflow-y-auto max-h-32 min-h-[44px] sm:min-h-[46px] leading-relaxed"
               />
             </div>
 
@@ -1084,7 +1001,7 @@ const Space = () => {
             <button
               type="submit"
               disabled={uploading || !messageText.trim()}
-              className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center text-white border-none cursor-pointer mb-0.5 ${
+              className={`flex-shrink-0 w-11 h-11 rounded-xl shadow-md transition-all active:scale-95 flex items-center justify-center text-white border-none cursor-pointer ${
                 messageText.includes('@AI')
                   ? 'bg-accent-ai hover:bg-accent-ai/90 shadow-accent-ai/20'
                   : 'bg-accent-primary hover:bg-accent-primary/90 shadow-accent-primary/20'
@@ -1092,9 +1009,9 @@ const Space = () => {
               title={messageText.includes('@AI') ? 'Send to AI' : 'Send Message'}
             >
               {messageText.includes('@AI') ? (
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse text-white" />
+                <Sparkles className="w-5 h-5 animate-pulse text-white" />
               ) : (
-                <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                <Send className="w-5 h-5" />
               )}
             </button>
           </form>
@@ -1753,8 +1670,14 @@ const Space = () => {
           animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
         @media (max-width: 1279px) {
           .slide-in-right {
@@ -1762,13 +1685,12 @@ const Space = () => {
           }
         }
         @keyframes slideInRight {
-          from { transform: translateX(100%); }
-          to { transform: translateX(0); }
-        }
-        /* Hide scrollbars on mobile for chat area */
-        @media (max-width: 768px) {
-          .scroll-gpu::-webkit-scrollbar { display: none; }
-          .scroll-gpu { -ms-overflow-style: none; scrollbar-width: none; }
+          from {
+            transform: translateX(100%);
+          }
+          to {
+            transform: translateX(0);
+          }
         }
       `}</style>
     </div>

@@ -500,14 +500,10 @@ Here is the recent space history context:
     socket.on('typing_start', async ({ spaceId } = {}) => {
       if (!spaceId || typeof spaceId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(spaceId)) return;
       try {
-        // Fast-path: check if user is already verified & in the space room
-        const inRoom = socket.rooms && socket.rooms.has(spaceId);
-        if (!inRoom) {
-          const space = await Space.findById(spaceId);
-          if (!space) return;
-          const isMember = space.members.some((m) => m.user.toString() === userId.toString());
-          if (!isMember) return;
-        }
+        const space = await Space.findById(spaceId);
+        if (!space) return;
+        const isMember = space.members.some((m) => m.user.toString() === userId.toString());
+        if (!isMember) return;
 
         socket.to(spaceId).emit('user_typing', {
           spaceId,
@@ -522,14 +518,10 @@ Here is the recent space history context:
     socket.on('typing_stop', async ({ spaceId } = {}) => {
       if (!spaceId || typeof spaceId !== 'string' || !/^[0-9a-fA-F]{24}$/.test(spaceId)) return;
       try {
-        // Fast-path: check if user is already verified & in the space room
-        const inRoom = socket.rooms && socket.rooms.has(spaceId);
-        if (!inRoom) {
-          const space = await Space.findById(spaceId);
-          if (!space) return;
-          const isMember = space.members.some((m) => m.user.toString() === userId.toString());
-          if (!isMember) return;
-        }
+        const space = await Space.findById(spaceId);
+        if (!space) return;
+        const isMember = space.members.some((m) => m.user.toString() === userId.toString());
+        if (!isMember) return;
 
         socket.to(spaceId).emit('user_typing', {
           spaceId,
@@ -550,15 +542,11 @@ Here is the recent space history context:
         const message = await Message.findById(messageId);
         if (!message) return;
 
-        // Fast-path: check if user is already verified & in the space room
-        const spaceIdStr = message.space.toString();
-        const inRoom = socket.rooms && socket.rooms.has(spaceIdStr);
-        if (!inRoom) {
-          const space = await Space.findById(message.space);
-          if (!space) return;
-          const isMember = space.members.some((m) => m.user.toString() === userId.toString());
-          if (!isMember) return;
-        }
+        // Check space membership
+        const space = await Space.findById(message.space);
+        if (!space) return;
+        const isMember = space.members.some((m) => m.user.toString() === userId.toString());
+        if (!isMember) return;
 
         // Check if reaction emoji already exists
         const reactionIndex = message.reactions.findIndex((r) => r.emoji === emoji);
@@ -576,7 +564,7 @@ Here is the recent space history context:
         await message.save();
 
         // Broadcast reaction update
-        io.to(spaceIdStr).emit('reaction_updated', {
+        io.to(message.space.toString()).emit('reaction_updated', {
           messageId,
           reactions: message.reactions,
         });
@@ -592,15 +580,11 @@ Here is the recent space history context:
         const message = await Message.findById(messageId);
         if (!message) return;
 
-        // Fast-path: check if user is already verified & in the space room
-        const spaceIdStr = message.space.toString();
-        const inRoom = socket.rooms && socket.rooms.has(spaceIdStr);
-        if (!inRoom) {
-          const space = await Space.findById(message.space);
-          if (!space) return;
-          const isMember = space.members.some((m) => m.user.toString() === userId.toString());
-          if (!isMember) return;
-        }
+        // Check space membership
+        const space = await Space.findById(message.space);
+        if (!space) return;
+        const isMember = space.members.some((m) => m.user.toString() === userId.toString());
+        if (!isMember) return;
 
         const reactionIndex = message.reactions.findIndex((r) => r.emoji === emoji);
 
@@ -618,7 +602,7 @@ Here is the recent space history context:
           await message.save();
 
           // Broadcast reaction update
-          io.to(spaceIdStr).emit('reaction_updated', {
+          io.to(message.space.toString()).emit('reaction_updated', {
             messageId,
             reactions: message.reactions,
           });

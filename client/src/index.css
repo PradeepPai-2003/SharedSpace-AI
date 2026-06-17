@@ -189,39 +189,3 @@ body {
   background-size: 400% 100%;
   animation: skeleton-loading 1.4s ease infinite;
 }
-
-/* ─── Mobile-first fixes ─── */
-
-/* Safe area inset for iPhone notch / home bar */
-.safe-area-bottom {
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
-}
-
-/* Dynamic viewport height — prevents browser chrome from cropping layout */
-.h-dvh { height: 100dvh; }
-.min-h-dvh { min-height: 100dvh; }
-
-/* Smooth native momentum scrolling on iOS */
-.scroll-gpu {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
-
-/* Hide native scrollbars on touch devices (chat areas) */
-@media (hover: none) and (pointer: coarse) {
-  .scroll-gpu::-webkit-scrollbar { display: none; }
-  .scroll-gpu { scrollbar-width: none; -ms-overflow-style: none; }
-}
-
-/* Prevent horizontal overflow at all breakpoints */
-body, #root {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-/* Minimum touch target size (WCAG AA) */
-button, [role="button"], a {
-  min-height: 36px;
-  min-width: 36px;
-}
-

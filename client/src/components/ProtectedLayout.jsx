@@ -86,8 +86,8 @@ const ProtectedLayout = () => {
   // Floating AI Button Responsive Fixed Positions
   const isSpacePage = location.pathname.startsWith('/space/');
   const bottomOffset = isSpacePage 
-    ? (windowSize.width < 768 ? '120px' : '120px') 
-    : (windowSize.width < 768 ? '20px' : '32px');
+    ? (windowSize.width < 768 ? '100px' : '120px') 
+    : (windowSize.width < 768 ? '16px' : '32px');
   const rightOffset = windowSize.width < 768 ? '16px' : '32px';
   
   // Modal Fields
@@ -582,7 +582,7 @@ const ProtectedLayout = () => {
 
   return (
 
-      <div className="min-h-screen bg-background-primary flex text-text-primary overflow-hidden relative" style={{ minHeight: '100dvh' }}>
+      <div className="min-h-screen bg-background-primary flex text-text-primary overflow-hidden relative">
       
       {/* MOBILE HEADER BAR */}
       {!isDetailPage && (
