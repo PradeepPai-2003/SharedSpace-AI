@@ -27,6 +27,50 @@ const TypingDots = () => {
   );
 };
 
+const AIMessageItem = React.memo(({ msg, isMe }) => {
+  return (
+    <div
+      className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span className="text-[10px] font-bold text-text-secondary">
+          {isMe ? 'You' : 'AI Assistant'}
+        </span>
+        {msg.timestamp && (
+          <span className="text-[9px] text-text-muted">
+            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        )}
+      </div>
+
+      <div
+        className={`p-3.5 rounded-2xl shadow-md ${
+          isMe
+            ? 'bg-accent-primary text-white rounded-tr-none'
+            : 'bg-gradient-to-tr from-background-secondary to-background-secondary/90 border border-border-primary text-text-primary rounded-tl-none'
+        }`}
+      >
+        {(!msg.content || msg.content.trim() === '') && msg.isStreaming ? (
+          <TypingDots />
+        ) : (
+          <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
+            {msg.content}
+            {msg.isStreaming && (
+              <span className="inline-block w-1.5 h-3.5 ml-1 bg-accent-ai animate-pulse rounded-sm align-middle" />
+            )}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.msg.content === nextProps.msg.content &&
+    prevProps.msg.isStreaming === nextProps.msg.isStreaming &&
+    prevProps.isMe === nextProps.isMe
+  );
+});
+
 const AIChat = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -320,40 +364,11 @@ const AIChat = () => {
             aiChatHistory.map((msg, index) => {
               const isMe = msg.role === 'user';
               return (
-                <div
+                <AIMessageItem
                   key={index}
-                  className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold text-text-secondary">
-                      {isMe ? 'You' : 'AI Assistant'}
-                    </span>
-                    {msg.timestamp && (
-                      <span className="text-[9px] text-text-muted">
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    )}
-                  </div>
-
-                  <div
-                    className={`p-3.5 rounded-2xl shadow-md ${
-                      isMe
-                        ? 'bg-accent-primary text-white rounded-tr-none'
-                        : 'bg-gradient-to-tr from-background-secondary to-background-secondary/90 border border-border-primary text-text-primary rounded-tl-none'
-                    }`}
-                  >
-                    {(!msg.content || msg.content.trim() === '') && msg.isStreaming ? (
-                      <TypingDots />
-                    ) : (
-                      <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
-                        {msg.content}
-                        {msg.isStreaming && (
-                          <span className="inline-block w-1.5 h-3.5 ml-1 bg-accent-ai animate-pulse rounded-sm align-middle" />
-                        )}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  msg={msg}
+                  isMe={isMe}
+                />
               );
             })
           )}

@@ -31,6 +31,277 @@ const TypingDots = () => {
   );
 };
 
+const MessageItem = React.memo(({
+  msg,
+  user,
+  currentSpace,
+  canDeleteAny,
+  isPinned,
+  isMe,
+  isAI,
+  isSys,
+  canDelete,
+  handleBubbleClick,
+  setReplyingTo,
+  setDeleteConfirmMsg,
+  togglePinMessage,
+  unpinMessageInSpace,
+  pinMessageInSpace,
+  handleReplyWithAI,
+  handleReactionClick,
+  setActiveMediaViewer,
+  mediaList
+}) => {
+  if (isSys) {
+    return (
+      <div className="text-center py-2">
+        <span className="text-[10px] font-medium text-text-muted bg-background-secondary px-3 py-1 rounded-full border border-border-primary/50">
+          {msg.content}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`flex gap-3 max-w-[80%] group ${isMe ? 'self-end flex-row-reverse' : 'self-start'}`}
+    >
+      {/* AI Bot Avatar next to the bubble */}
+      {isAI && (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-ai/10 border border-accent-ai/30 flex items-center justify-center overflow-hidden self-end mb-1">
+          {msg.sender?.avatar ? (
+            <img src={msg.sender.avatar} alt="AI Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <Bot className="w-4 h-4 text-accent-ai" />
+          )}
+        </div>
+      )}
+
+      <div className={`flex flex-col focus:outline-none ${isMe ? 'items-end' : 'items-start'}`} tabIndex={0}>
+        {/* Sender Metadata (Name + Time) */}
+        <div className="flex items-center gap-2 mb-1.5">
+          {!isMe && (
+            <span className="text-[11px] font-bold text-text-primary flex items-center gap-1">
+              {isAI ? (
+                <span className="px-1.5 py-0.5 bg-accent-ai/20 border border-accent-ai/30 text-accent-ai rounded-md text-[9px] font-bold flex items-center gap-0.5">
+                  AI
+                </span>
+              ) : null}
+              {msg.sender?.displayName || msg.sender?.username || 'User'}
+            </span>
+          )}
+          <span className="text-[9px] text-text-muted">
+            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          {isPinned && (
+            <Pin className="w-3 h-3 text-accent-primary flex-shrink-0 rotate-45" title="Pinned Message" />
+          )}
+          {msg.pinnedByUsers?.includes(user._id) && (
+            <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" title="Starred Message" />
+          )}
+        </div>
+
+        {/* Bubble body */}
+        <div
+          onClick={() => handleBubbleClick(msg)}
+          className={`p-3.5 rounded-2xl shadow-md relative group/bubble cursor-pointer lg:cursor-default ${
+            isMe
+              ? 'bg-accent-primary text-white rounded-tr-none'
+              : isAI
+              ? 'bg-gradient-to-tr from-accent-ai/10 to-teal-400/10 border-2 border-accent-ai/50 shadow-[0_0_15px_rgba(45,212,191,0.15)] text-text-primary rounded-tl-none'
+              : 'bg-background-secondary border border-border-primary text-text-primary rounded-tl-none'
+          }`}
+        >
+          {/* Soft-deleted message check */}
+          {msg.isDeleted ? (
+            <p className="text-xs italic text-text-muted">This message was deleted.</p>
+          ) : (
+            <>
+              {msg.replyTo && (
+                <div className="mb-2 p-2 rounded bg-background-primary/40 border-l-2 border-accent-primary text-[11px] text-text-secondary leading-relaxed">
+                  <span className="font-bold text-text-primary block text-[10px]">
+                    @{msg.replyTo.sender?.username || 'User'}
+                  </span>
+                  <span className="truncate block max-w-xs">
+                    {msg.replyTo.isDeleted ? 'This message was deleted.' : msg.replyTo.content}
+                  </span>
+                </div>
+              )}
+              {/* Text Content */}
+              {(!msg.content || msg.content.trim() === '') && msg.isStreaming ? (
+                <TypingDots />
+              ) : (
+                <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
+                  {msg.content}
+                  {msg.isStreaming && (
+                    <span className="inline-block w-1.5 h-3.5 ml-1 bg-accent-ai animate-pulse rounded-sm align-middle" />
+                  )}
+                </p>
+              )}
+
+              {/* Image Attachment Rendering */}
+              {msg.type === 'image' && msg.fileUrl && (
+                <div className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm cursor-zoom-in">
+                  <img
+                    src={msg.fileUrl}
+                    alt={msg.fileName || 'shared asset'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
+                      setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
+                    }}
+                    className="max-h-60 w-full object-cover hover:opacity-95 transition-opacity"
+                  />
+                </div>
+              )}
+
+              {/* Video Attachment Rendering */}
+              {msg.type === 'video' && msg.fileUrl && (
+                <div 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
+                    setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
+                  }}
+                  className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm bg-black relative cursor-pointer group/video"
+                >
+                  <video src={msg.fileUrl} className="max-h-60 w-full object-contain pointer-events-none" />
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover/video:bg-black/45 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white scale-100 group-hover/video:scale-110 transition-transform shadow-lg">
+                      <Play className="w-5 h-5 translate-x-0.5 fill-white text-white" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Controls row (Reply + Trash + Pin + Reply with AI) on hover */}
+          {!msg.isDeleted ? (
+            <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
+              isMe ? 'right-full mr-3' : 'left-full ml-3'
+            } ${isMe ? '' : 'flex-row-reverse'}`}>
+              <button
+                onClick={() => setReplyingTo(msg)}
+                className="p-1.5 text-text-muted hover:text-accent-primary rounded-lg hover:bg-background-elevated transition-all"
+                title="Reply to Message"
+              >
+                <CornerUpLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setDeleteConfirmMsg(msg)}
+                className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
+                title="Delete Message"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => togglePinMessage(msg._id)}
+                className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
+                  msg.pinnedByUsers?.includes(user._id) ? 'text-amber-500 fill-amber-500' : 'text-text-muted hover:text-amber-500'
+                }`}
+                title={msg.pinnedByUsers?.includes(user._id) ? "Unstar Message" : "Pin Message"}
+              >
+                <Star className="w-3.5 h-3.5" />
+              </button>
+              {canDeleteAny && (
+                <button
+                  onClick={() => {
+                    console.log(`[DEBUG] Workspace Pin/Unpin button clicked. Message ID: ${msg._id}, isPinned: ${isPinned}`);
+                    if (isPinned) {
+                      unpinMessageInSpace(msg._id);
+                    } else {
+                      pinMessageInSpace(msg._id);
+                    }
+                  }}
+                  className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
+                    isPinned ? 'text-accent-primary' : 'text-text-muted hover:text-accent-primary'
+                  }`}
+                  title={isPinned ? "Unpin Message" : "Pin Message"}
+                >
+                  <Pin className="w-3.5 h-3.5" />
+                </button>
+              )}
+              {currentSpace?.hasAI && (
+                <button
+                  onClick={() => handleReplyWithAI(msg._id)}
+                  className="p-1.5 text-text-muted hover:text-accent-ai rounded-lg hover:bg-background-elevated transition-all"
+                  title="Reply with AI"
+                >
+                  <Bot className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
+              isMe ? 'right-full mr-3' : 'left-full ml-3'
+            } ${isMe ? '' : 'flex-row-reverse'}`}>
+              <button
+                onClick={() => setDeleteConfirmMsg(msg)}
+                className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
+                title="Delete Message"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Reaction Badges row */}
+        {msg.reactions && msg.reactions.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {msg.reactions.map((react) => {
+              const hasReacted = react.users.includes(user._id);
+              return (
+                <button
+                  key={react.emoji}
+                  onClick={() => handleReactionClick(msg._id, react.emoji, hasReacted)}
+                  className={`px-2 py-0.5 rounded-full text-[10px] border flex items-center gap-1 font-medium transition-all ${
+                    hasReacted
+                      ? 'bg-accent-primary/20 border-accent-primary text-text-primary'
+                      : 'bg-background-secondary border-border-primary hover:border-text-secondary text-text-secondary'
+                  }`}
+                >
+                  <span>{react.emoji}</span>
+                  <span>{react.users.length}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Quick reactions picker panel (hover/focus-triggered) */}
+        {!msg.isDeleted && (
+          <div className="hidden lg:flex gap-1 mt-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+            {['👍', '❤️', '🔥', '😂', '😮', '🙏'].map((emoji) => {
+              const reacted = msg.reactions?.some((r) => r.emoji === emoji && r.users.includes(user._id));
+              return (
+                <button
+                  key={emoji}
+                  onClick={() => handleReactionClick(msg._id, emoji, reacted)}
+                  className="text-xs p-1 hover:bg-background-elevated rounded-md hover:scale-110 active:scale-95 transition-transform"
+                >
+                  {emoji}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.msg._id === nextProps.msg._id &&
+    prevProps.msg.content === nextProps.msg.content &&
+    prevProps.msg.isStreaming === nextProps.msg.isStreaming &&
+    prevProps.msg.isDeleted === nextProps.msg.isDeleted &&
+    prevProps.isPinned === nextProps.isPinned &&
+    JSON.stringify(prevProps.msg.reactions) === JSON.stringify(nextProps.msg.reactions) &&
+    JSON.stringify(prevProps.msg.pinnedByUsers) === JSON.stringify(nextProps.msg.pinnedByUsers)
+  );
+});
+
 const Space = () => {
   const { spaceId } = useParams();
   const navigate = useNavigate();
@@ -115,6 +386,8 @@ const Space = () => {
   const messageEndRef = useRef(null);
   const inputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const isTypingRef = useRef(false);
+  const typingTimeoutRef = useRef(null);
 
   // Fetch space details and message history on load/params-change
   useEffect(() => {
@@ -141,6 +414,10 @@ const Space = () => {
         socket.emit('leave_space', { spaceId });
       }
       clearCurrentSpace();
+
+      // Clear typing timeouts
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      isTypingRef.current = false;
     };
   }, [spaceId, fetchSpaceDetails, fetchMessages, clearCurrentSpace]);
 
@@ -203,9 +480,10 @@ const Space = () => {
     );
   }
 
-  // Handle typing emitters
+  // Handle typing emitters (throttled to avoid network/DB congestion)
   const handleInputChange = (e) => {
-    setMessageText(e.target.value);
+    const val = e.target.value;
+    setMessageText(val);
     
     // Auto-grow height for textarea
     if (inputRef.current) {
@@ -216,10 +494,23 @@ const Space = () => {
     const socket = getSocket();
     if (!socket) return;
 
-    if (e.target.value.trim().length > 0) {
-      socket.emit('typing_start', { spaceId });
+    if (val.trim().length > 0) {
+      if (!isTypingRef.current) {
+        isTypingRef.current = true;
+        socket.emit('typing_start', { spaceId });
+      }
+
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        isTypingRef.current = false;
+        socket.emit('typing_stop', { spaceId });
+      }, 3000);
     } else {
-      socket.emit('typing_stop', { spaceId });
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        socket.emit('typing_stop', { spaceId });
+      }
     }
   };
 
@@ -245,6 +536,10 @@ const Space = () => {
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
     }
+
+    // Reset typing status on send
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    isTypingRef.current = false;
 
     // Emit typing stop
     const socket = getSocket();
@@ -684,244 +979,29 @@ const Space = () => {
               });
               const canDelete = isMe || canDeleteAny;
 
-              if (isSys) {
-                return (
-                  <div key={msg._id} className="text-center py-2">
-                    <span className="text-[10px] font-medium text-text-muted bg-background-secondary px-3 py-1 rounded-full border border-border-primary/50">
-                      {msg.content}
-                    </span>
-                  </div>
-                );
-              }
-
               return (
-                <div
+                <MessageItem
                   key={msg._id}
-                  className={`flex gap-3 max-w-[80%] group ${isMe ? 'self-end flex-row-reverse' : 'self-start'}`}
-                >
-                  {/* AI Bot Avatar next to the bubble */}
-                  {isAI && (
-                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-accent-ai/10 border border-accent-ai/30 flex items-center justify-center overflow-hidden self-end mb-1">
-                      {msg.sender?.avatar ? (
-                        <img src={msg.sender.avatar} alt="AI Avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <Bot className="w-4 h-4 text-accent-ai" />
-                      )}
-                    </div>
-                  )}
-
-                  <div className={`flex flex-col focus:outline-none ${isMe ? 'items-end' : 'items-start'}`} tabIndex={0}>
-                    {/* Sender Metadata (Name + Time) */}
-                    <div className="flex items-center gap-2 mb-1.5">
-                      {!isMe && (
-                        <span className="text-[11px] font-bold text-text-primary flex items-center gap-1">
-                          {isAI ? (
-                            <span className="px-1.5 py-0.5 bg-accent-ai/20 border border-accent-ai/30 text-accent-ai rounded-md text-[9px] font-bold flex items-center gap-0.5">
-                              AI
-                            </span>
-                          ) : null}
-                          {msg.sender.displayName || msg.sender.username}
-                        </span>
-                      )}
-                      <span className="text-[9px] text-text-muted">
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      {isPinned && (
-                        <Pin className="w-3 h-3 text-accent-primary flex-shrink-0 rotate-45" title="Pinned Message" />
-                      )}
-                      {msg.pinnedByUsers?.includes(user._id) && (
-                        <Star className="w-3 h-3 text-amber-500 fill-amber-500 flex-shrink-0" title="Starred Message" />
-                      )}
-                    </div>
-
-                    {/* Bubble body */}
-                    <div
-                      onClick={() => handleBubbleClick(msg)}
-                      className={`p-3.5 rounded-2xl shadow-md relative group/bubble cursor-pointer lg:cursor-default ${
-                        isMe
-                          ? 'bg-accent-primary text-white rounded-tr-none'
-                          : isAI
-                          ? 'bg-gradient-to-tr from-accent-ai/10 to-teal-400/10 border-2 border-accent-ai/50 shadow-[0_0_15px_rgba(45,212,191,0.15)] text-text-primary rounded-tl-none'
-                          : 'bg-background-secondary border border-border-primary text-text-primary rounded-tl-none'
-                      }`}
-                    >
-                      {/* Soft-deleted message check */}
-                      {msg.isDeleted ? (
-                        <p className="text-xs italic text-text-muted">This message was deleted.</p>
-                      ) : (
-                        <>
-                          {msg.replyTo && (
-                            <div className="mb-2 p-2 rounded bg-background-primary/40 border-l-2 border-accent-primary text-[11px] text-text-secondary leading-relaxed">
-                              <span className="font-bold text-text-primary block text-[10px]">
-                                @{msg.replyTo.sender?.username || 'User'}
-                              </span>
-                              <span className="truncate block max-w-xs">
-                                {msg.replyTo.isDeleted ? 'This message was deleted.' : msg.replyTo.content}
-                              </span>
-                            </div>
-                          )}
-                          {/* Text Content */}
-                          {(!msg.content || msg.content.trim() === '') && msg.isStreaming ? (
-                            <TypingDots />
-                          ) : (
-                            <p className="text-xs md:text-sm whitespace-pre-wrap break-words leading-relaxed">
-                              {msg.content}
-                              {msg.isStreaming && (
-                                <span className="inline-block w-1.5 h-3.5 ml-1 bg-accent-ai animate-pulse rounded-sm align-middle" />
-                              )}
-                            </p>
-                          )}
-
-                          {/* Image Attachment Rendering */}
-                          {msg.type === 'image' && msg.fileUrl && (
-                            <div className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm cursor-zoom-in">
-                              <img
-                                src={msg.fileUrl}
-                                alt={msg.fileName || 'shared asset'}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
-                                  setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
-                                }}
-                                className="max-h-60 w-full object-cover hover:opacity-95 transition-opacity"
-                              />
-                            </div>
-                          )}
-
-                          {/* Video Attachment Rendering */}
-                          {msg.type === 'video' && msg.fileUrl && (
-                            <div 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const idx = mediaList.findIndex((m) => m._id.toString() === msg._id.toString());
-                                setActiveMediaViewer({ initialIndex: idx >= 0 ? idx : 0 });
-                              }}
-                              className="mt-3 rounded-lg overflow-hidden border border-border-primary/50 max-w-sm bg-black relative cursor-pointer group/video"
-                            >
-                              <video src={msg.fileUrl} className="max-h-60 w-full object-contain pointer-events-none" />
-                              <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover/video:bg-black/45 transition-colors">
-                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white scale-100 group-hover/video:scale-110 transition-transform shadow-lg">
-                                  <Play className="w-5 h-5 translate-x-0.5 fill-white text-white" />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      {/* Controls row (Reply + Trash + Pin + Reply with AI) on hover */}
-                      {!msg.isDeleted ? (
-                        <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
-                          isMe ? 'right-full mr-3' : 'left-full ml-3'
-                        } ${isMe ? '' : 'flex-row-reverse'}`}>
-                          <button
-                            onClick={() => setReplyingTo(msg)}
-                            className="p-1.5 text-text-muted hover:text-accent-primary rounded-lg hover:bg-background-elevated transition-all"
-                            title="Reply to Message"
-                          >
-                            <CornerUpLeft className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => setDeleteConfirmMsg(msg)}
-                            className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
-                            title="Delete Message"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => togglePinMessage(msg._id)}
-                            className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
-                              msg.pinnedByUsers?.includes(user._id) ? 'text-amber-500 fill-amber-500' : 'text-text-muted hover:text-amber-500'
-                            }`}
-                            title={msg.pinnedByUsers?.includes(user._id) ? "Unstar Message" : "Pin Message"}
-                          >
-                            <Star className="w-3.5 h-3.5" />
-                          </button>
-                          {canDeleteAny && (
-                            <button
-                              onClick={() => {
-                                console.log(`[DEBUG] Workspace Pin/Unpin button clicked. Message ID: ${msg._id}, isPinned: ${isPinned}`);
-                                if (isPinned) {
-                                  unpinMessageInSpace(msg._id);
-                                } else {
-                                  pinMessageInSpace(msg._id);
-                                }
-                              }}
-                              className={`p-1.5 rounded-lg hover:bg-background-elevated transition-all ${
-                                isPinned ? 'text-accent-primary' : 'text-text-muted hover:text-accent-primary'
-                              }`}
-                              title={isPinned ? "Unpin Message" : "Pin Message"}
-                            >
-                              <Pin className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                          {currentSpace?.hasAI && (
-                            <button
-                              onClick={() => handleReplyWithAI(msg._id)}
-                              className="p-1.5 text-text-muted hover:text-accent-ai rounded-lg hover:bg-background-elevated transition-all"
-                              title="Reply with AI"
-                            >
-                              <Bot className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <div className={`absolute top-1/2 -translate-y-1/2 hidden lg:flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-all z-10 ${
-                          isMe ? 'right-full mr-3' : 'left-full ml-3'
-                        } ${isMe ? '' : 'flex-row-reverse'}`}>
-                          <button
-                            onClick={() => setDeleteConfirmMsg(msg)}
-                            className="p-1.5 text-text-muted hover:text-danger rounded-lg hover:bg-background-elevated transition-all"
-                            title="Delete Message"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                  {/* Reaction Badges row */}
-                  {msg.reactions && msg.reactions.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {msg.reactions.map((react) => {
-                        const hasReacted = react.users.includes(user._id);
-                        return (
-                          <button
-                            key={react.emoji}
-                            onClick={() => handleReactionClick(msg._id, react.emoji, hasReacted)}
-                            className={`px-2 py-0.5 rounded-full text-[10px] border flex items-center gap-1 font-medium transition-all ${
-                              hasReacted
-                                ? 'bg-accent-primary/20 border-accent-primary text-text-primary'
-                                : 'bg-background-secondary border-border-primary hover:border-text-secondary text-text-secondary'
-                            }`}
-                          >
-                            <span>{react.emoji}</span>
-                            <span>{react.users.length}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Quick reactions picker panel (hover/focus-triggered) */}
-                  {!msg.isDeleted && (
-                    <div className="hidden lg:flex gap-1 mt-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
-                      {['👍', '❤️', '🔥', '😂', '😮', '🙏'].map((emoji) => {
-                        const reacted = msg.reactions?.some((r) => r.emoji === emoji && r.users.includes(user._id));
-                        return (
-                          <button
-                            key={emoji}
-                            onClick={() => handleReactionClick(msg._id, emoji, reacted)}
-                            className="text-xs p-1 hover:bg-background-elevated rounded-md hover:scale-110 active:scale-95 transition-transform"
-                          >
-                            {emoji}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                  </div>
-                </div>
+                  msg={msg}
+                  user={user}
+                  currentSpace={currentSpace}
+                  canDeleteAny={canDeleteAny}
+                  isPinned={isPinned}
+                  isMe={isMe}
+                  isAI={isAI}
+                  isSys={isSys}
+                  canDelete={canDelete}
+                  handleBubbleClick={handleBubbleClick}
+                  setReplyingTo={setReplyingTo}
+                  setDeleteConfirmMsg={setDeleteConfirmMsg}
+                  togglePinMessage={togglePinMessage}
+                  unpinMessageInSpace={unpinMessageInSpace}
+                  pinMessageInSpace={pinMessageInSpace}
+                  handleReplyWithAI={handleReplyWithAI}
+                  handleReactionClick={handleReactionClick}
+                  setActiveMediaViewer={setActiveMediaViewer}
+                  mediaList={mediaList}
+                />
               );
             })
           )}

@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import compression from 'compression';
 
 import connectDB from './config/db.js';
 import { setupSockets } from './sockets/socketHandler.js';
@@ -44,6 +45,7 @@ if (process.env.NODE_ENV === 'production') {
 connectDB();
 
 const app = express();
+app.use(compression());
 const server = http.createServer(app);
 
 // Initialize Socket.IO Server
